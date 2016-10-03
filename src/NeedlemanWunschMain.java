@@ -7,12 +7,11 @@ public class NeedlemanWunschMain {
 
         initialize(argString1, argString2);
         fillNwMatrix();
+        printNWM();
 
     }
 
-    /*
-     * some permanent constants
-     */
+    // some permanent constants
     public static final int GAP_SCORE = -2;
     public static final String SCORE_MATRIX_COL_AND_ROW_NAMES = "CTAG";
     public static final int[][] SCORE_MATRIX =  {{2,1,-1,-1},
@@ -20,24 +19,18 @@ public class NeedlemanWunschMain {
                                                  {-1,-1,2,1},
                                                  {-1,-1,1,2}};
 
-    /*
-     * some constants to be defined at runtime
-     */
+    // some constants to be defined at runtime
     public static String argString1;
     public static String argString2;
     public static NWCell[][] nwm; // Needleman-Wunsch score and traceback matrix
 
 
-    /**
-     * Create empty NW matrix given two Strings
-     */
+    // Create empty NW matrix given two Strings
     public static void initialize(String a, String b) {
         nwm = new NWCell[a.length() + 1][b.length() + 1];
     }
 
-    /**
-     * Fill NW matrix matrix
-     */
+    // Fill NW matrix matrix
     public static void fillNwMatrix() {
         for (int i = 0; i < nwm.length; i++) {
             for (int j = 0; j < nwm[0].length; j++) {
@@ -46,9 +39,7 @@ public class NeedlemanWunschMain {
         }
     }
 
-    /**
-     * Calculate the score and traceback direction for the cell using a recurrence relation
-     */
+    // Calculate the score and traceback direction for the cell using a recurrence relation
     public static NWCell getNWCell(int i , int j) {
         // get the three relevant adjacent cells to the current cell according to the NW algo
         NWCell up = (i - 1 < 0)? null: nwm[i-1][j];
@@ -56,7 +47,7 @@ public class NeedlemanWunschMain {
         NWCell diag = (j - 1 < 0 || i - 1 < 0)? null: nwm[i-1][j-1];
         NWCell max = new NWCell(Integer.MIN_VALUE, Direction.DONE);
 
-        // determine the max of the three cells in question and assign direction and score value to the current cell accordingly
+        // determine the max of the three cells and assign direction and score to the current cell accordingly
         if (diag != null) {
             // charAt(i - 1) because the index in nwm for a certain letter is one over since the col/row names start with a gap
             max = new NWCell(diag.num + scoreMatrix(argString1.charAt(i-1), argString2.charAt(j-1)), Direction.DIAG);
@@ -86,6 +77,16 @@ public class NeedlemanWunschMain {
      */
     public static void traceback() {
 
+    }
+
+    //print the nwm matrix
+    public static void printNWM() {
+        for (int i = 0; i < nwm.length; i++) {
+            for (int j = 0; j < nwm.length; j++) {
+                System.out.print(nwm[i][j]);
+            }
+            System.out.println();
+        }
     }
 }
 
