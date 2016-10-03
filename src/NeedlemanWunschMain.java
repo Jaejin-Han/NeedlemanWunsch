@@ -83,7 +83,7 @@ public class NeedlemanWunschMain {
     public static void printNWM() {
         for (int i = 0; i < nwm.length; i++) {
             for (int j = 0; j < nwm.length; j++) {
-                System.out.print(nwm[i][j]);
+                System.out.print(nwm[i][j].num + ":" + nwm[i][j].whereto + "\t\t");
             }
             System.out.println();
         }
