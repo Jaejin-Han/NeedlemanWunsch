@@ -3,7 +3,6 @@ import java.util.ArrayDeque;
 public class NeedlemanWunschMain {
 
     public static void main(String[] args) {
-        //TODO: get user input for argStrings
         argString1 = args[0];
         argString2 = args[1];
 
@@ -17,15 +16,15 @@ public class NeedlemanWunschMain {
     // some permanent constants
     public static final int GAP_SCORE = -2;
     public static final String SCORE_MATRIX_COL_AND_ROW_NAMES = "CTAG";
-    public static final int[][] SCORE_MATRIX =  {{2,1,-1,-1},
-                                                 {1,2,-1,-1},
-                                                 {-1,-1,2,1},
-                                                 {-1,-1,1,2}};
+    public static final int[][] SCORE_MATRIX =  {{2,1,-1,-1}, // the top left 4 entries and bottom right 4 entries are
+                                                 {1,2,-1,-1}, // positive values whereas the other 8 are negative. This
+                                                 {-1,-1,2,1}, // indicates that transversion gives a score of -1 and
+                                                 {-1,-1,1,2}}; // transition gives 1. Matching gives 2.
 
     // some constants to be defined at runtime
     public static String argString1;
     public static String argString2;
-    public static NWCell[][] nwm; // Needleman-Wunsch score and traceback matrix
+    public static NWCell[][] nwm; // The Needleman-Wunsch score and traceback matrix
 
 
     // Create empty NW matrix given two Strings
@@ -62,7 +61,7 @@ public class NeedlemanWunschMain {
             max = new NWCell(left.num + GAP_SCORE, Direction.LEFT);
         }
 
-        if (max.whereto == Direction.DONE) {
+        if (max.cellPointer == Direction.DONE) {
             max.num = 0;
         }
         return max;
@@ -85,9 +84,10 @@ public class NeedlemanWunschMain {
         int i = nwm.length - 1;
         int j = nwm[0].length - 1;
         NWCell currCell = nwm[i][j]; //bottom right cell
+        int score = currCell.num;
 
-        while (currCell.whereto != Direction.DONE) {
-            switch (currCell.whereto) {
+        while (currCell.cellPointer != Direction.DONE) {
+            switch (currCell.cellPointer) {
                 case DIAG:
                     stack1.push(argString1.charAt(i-1));
                     stack2.push(argString2.charAt(j-1));
@@ -120,14 +120,16 @@ public class NeedlemanWunschMain {
 
         for (Character c : stack2) {
             System.out.print(c);
-        }
+        } System.out.println();
+
+        System.out.println("score: " + score);
     }
 
     //print the nwm matrix
     public static void printNWM() {
         for (int i = 0; i < nwm.length; i++) {
-            for (int j = 0; j < nwm.length; j++) {
-                System.out.print(nwm[i][j].num + ":" + nwm[i][j].whereto + "\t\t");
+            for (int j = 0; j < nwm[0].length; j++) {
+                System.out.print(nwm[i][j].num + ":" + nwm[i][j].cellPointer + "\t\t");
             }
             System.out.println();
         }
@@ -139,11 +141,11 @@ public class NeedlemanWunschMain {
  */
 class NWCell {
     Integer num;
-    Direction whereto;
+    Direction cellPointer;
 
     NWCell(Integer num, Direction whereto) {
         this.num = num;
-        this.whereto = whereto;
+        this.cellPointer = whereto;
     }
 }
 
