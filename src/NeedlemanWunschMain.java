@@ -1,3 +1,5 @@
+import java.util.ArrayDeque;
+
 public class NeedlemanWunschMain {
 
     public static void main(String[] args) {
@@ -8,6 +10,7 @@ public class NeedlemanWunschMain {
         initialize(argString1, argString2);
         fillNwMatrix();
         printNWM();
+        traceback();
 
     }
 
@@ -76,7 +79,48 @@ public class NeedlemanWunschMain {
      * Perform traceback
      */
     public static void traceback() {
+        ArrayDeque<Character> stack1 = new ArrayDeque<>();
+        ArrayDeque<Character> stack2 = new ArrayDeque<>();
 
+        int i = nwm.length - 1;
+        int j = nwm[0].length - 1;
+        NWCell currCell = nwm[i][j]; //bottom right cell
+
+        while (currCell.whereto != Direction.DONE) {
+            switch (currCell.whereto) {
+                case DIAG:
+                    stack1.push(argString1.charAt(i-1));
+                    stack2.push(argString2.charAt(j-1));
+
+                    i -= 1;
+                    j -= 1;
+                    currCell = nwm[i][j];
+                    break;
+                case UP:
+                    stack1.push(argString1.charAt(i-1));
+                    stack2.push('-');
+
+                    i -= 1;
+                    currCell = nwm[i][j];
+                    break;
+                case LEFT:
+                    stack1.push('-');
+                    stack2.push(argString2.charAt(j-1));
+
+                    j -= 1;
+                    currCell = nwm[i][j];
+                    break;
+            }
+        }
+
+        System.out.println();
+        for (Character c : stack1) {
+            System.out.print(c);
+        } System.out.println();
+
+        for (Character c : stack2) {
+            System.out.print(c);
+        }
     }
 
     //print the nwm matrix
