@@ -1,35 +1,105 @@
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.HashMap;
 
 public class NeedlemanWunschMain {
 
-    public static void main(String[] args) {
-        argString1 = args[0];
-        argString2 = args[1];
-
-        initialize(argString1, argString2);
+    public static void main(String[] cmdlineArgs) {
+        paramsFileName = cmdlineArgs[0];
+        sequenceFileName = cmdlineArgs[1];
+        initialize();
         fillNwMatrix();
-        printNWM();
         traceback();
-
     }
 
-    // some permanent constants
-    public static final int GAP_SCORE = -2;
-    public static final String SCORE_MATRIX_COL_AND_ROW_NAMES = "CTAG";
-    public static final int[][] SCORE_MATRIX =  {{2,1,-1,-1}, // the top left 4 entries and bottom right 4 entries are
-                                                 {1,2,-1,-1}, // positive values whereas the other 8 are negative. This
-                                                 {-1,-1,2,1}, // indicates that transversion gives a score of -1 and
-                                                 {-1,-1,1,2}}; // transition gives 1. Matching gives 2.
+    // Some boolean switches to control the printing of the matrix and the alignment.
+    public static boolean printNWM;
+    public static boolean printAlignment;
 
-    // some constants to be defined at runtime
-    public static String argString1;
-    public static String argString2;
+    // instantiated at runtime
     public static NWCell[][] nwm; // The Needleman-Wunsch score and traceback matrix
+    public static HashMap<Character, Integer> charIndexMap; // the mapping from CTAG to indices in the scoreMatrix
+    public static int[][] scoreMatrix; // a matrix to hold the scoring system
+    public static String paramsFileName;
+    public static String sequenceFileName;
 
+    // values defined in input files
+    public static String sequenceOne; // the first sequence
+    public static String sequenceTwo; // the second sequence
+    public static int transversionScore; // values to populate the scoreMatrix
+    public static int transitionScore;
+    public static int matchScore;
+    public static int gapScore;
 
     // Create empty NW matrix given two Strings
-    public static void initialize(String a, String b) {
-        nwm = new NWCell[a.length() + 1][b.length() + 1];
+    public static void initialize() {
+        charIndexMap = new HashMap<>();
+        charIndexMap.put('C', 0);
+        charIndexMap.put('T', 1);
+        charIndexMap.put('A', 2);
+        charIndexMap.put('G', 3);
+
+        handleInputFiles();
+
+        //                                           C                      T                       A                       G
+        scoreMatrix = new int[][]{  /* C */     {matchScore,         transitionScore,       transversionScore,       transversionScore},
+                                    /* T */     {transitionScore,    matchScore,             transversionScore,      transversionScore},
+                                    /* A */     {transversionScore,  transversionScore,      matchScore,             transitionScore},
+                                    /* G */     {transversionScore,  transversionScore,      transitionScore,        matchScore}};
+
+        nwm = new NWCell[sequenceOne.length() + 1][sequenceTwo.length() + 1];
+    }
+
+    private static void handleInputFiles() {
+        try {
+            BufferedReader brp = new BufferedReader(new FileReader(paramsFileName));
+            BufferedReader brs = new BufferedReader(new FileReader(sequenceFileName));
+
+            String currLine;
+            String[] currWords;
+            String param;
+
+            // go through params.txt file
+            while ((currLine = brp.readLine()) != null) {
+                currWords = currLine.split(" ");
+                param = currWords[1];
+                if (currLine.contains("transversion")) {
+                    transversionScore = Integer.valueOf(param);
+                } else if (currLine.contains("transition")) {
+                    transitionScore = Integer.valueOf(param);
+                } else if (currLine.contains("match")) {
+                    matchScore = Integer.valueOf(param);
+                } else if (currLine.contains("gap")) {
+                    gapScore = Integer.valueOf(param);
+                } else if (currLine.contains("NWM")) {
+                    printNWM = Boolean.valueOf(param);
+                } else if (currLine.contains("Alignment")) {
+                    printAlignment = Boolean.valueOf(param);
+                }
+            }
+
+            // go through
+            boolean first = true;
+            while ((currLine = brs.readLine()) != null) {
+                if (currLine.length() > 0 && "CTAG".contains(currLine.substring(0,1))) {
+                    if (first) {
+                        sequenceOne = currLine;
+                        first = !first;
+                    } else {
+                        sequenceTwo = currLine;
+                    }
+                }
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     // Fill NW matrix matrix
@@ -39,6 +109,7 @@ public class NeedlemanWunschMain {
                 nwm[i][j] = getNWCell(i,j);
             }
         }
+        printNWM();
     }
 
     // Calculate the score and traceback direction for the cell using a recurrence relation
@@ -51,14 +122,14 @@ public class NeedlemanWunschMain {
 
         // determine the max of the three cells and assign direction and score to the current cell accordingly
         if (diag != null) {
-            // charAt(i - 1) because the index in nwm for a certain letter is one over since the col/row names start with a gap
-            max = new NWCell(diag.num + scoreMatrix(argString1.charAt(i-1), argString2.charAt(j-1)), Direction.DIAG);
+            // charAt(i - 1) because the index in nwm for a certain letter is one over since the col/row names start with a gapScore
+            max = new NWCell(diag.num + scoreMatrix(sequenceOne.charAt(i-1), sequenceTwo.charAt(j-1)), Direction.DIAG);
         }
-        if (up != null && up.num + GAP_SCORE > max.num) {
-            max = new NWCell(up.num + GAP_SCORE, Direction.UP);
+        if (up != null && up.num + gapScore > max.num) {
+            max = new NWCell(up.num + gapScore, Direction.UP);
         }
-        if (left != null && left.num + GAP_SCORE > max.num) {
-            max = new NWCell(left.num + GAP_SCORE, Direction.LEFT);
+        if (left != null && left.num + gapScore > max.num) {
+            max = new NWCell(left.num + gapScore, Direction.LEFT);
         }
 
         if (max.cellPointer == Direction.DONE) {
@@ -69,9 +140,9 @@ public class NeedlemanWunschMain {
 
     private static Integer scoreMatrix(char a, char b) {
         // should make sense if you look at the value of the String and matrix used here
-        int i = SCORE_MATRIX_COL_AND_ROW_NAMES.indexOf(a);
-        int j = SCORE_MATRIX_COL_AND_ROW_NAMES.indexOf(b);
-        return SCORE_MATRIX[i][j];
+        int i = charIndexMap.get(a);
+        int j = charIndexMap.get(b);
+        return scoreMatrix[i][j];
     }
 
     /**
@@ -89,15 +160,15 @@ public class NeedlemanWunschMain {
         while (currCell.cellPointer != Direction.DONE) {
             switch (currCell.cellPointer) {
                 case DIAG:
-                    stack1.push(argString1.charAt(i-1));
-                    stack2.push(argString2.charAt(j-1));
+                    stack1.push(sequenceOne.charAt(i-1));
+                    stack2.push(sequenceTwo.charAt(j-1));
 
                     i -= 1;
                     j -= 1;
                     currCell = nwm[i][j];
                     break;
                 case UP:
-                    stack1.push(argString1.charAt(i-1));
+                    stack1.push(sequenceOne.charAt(i-1));
                     stack2.push('-');
 
                     i -= 1;
@@ -105,7 +176,7 @@ public class NeedlemanWunschMain {
                     break;
                 case LEFT:
                     stack1.push('-');
-                    stack2.push(argString2.charAt(j-1));
+                    stack2.push(sequenceTwo.charAt(j-1));
 
                     j -= 1;
                     currCell = nwm[i][j];
@@ -113,20 +184,27 @@ public class NeedlemanWunschMain {
             }
         }
 
+        if ( printAlignment ){
+            System.out.println();
+            for (Character c : stack1) {
+                System.out.print(c);
+            }
+            System.out.println();
+
+            for (Character c : stack2) {
+                System.out.print(c);
+            }
+        }
+
         System.out.println();
-        for (Character c : stack1) {
-            System.out.print(c);
-        } System.out.println();
-
-        for (Character c : stack2) {
-            System.out.print(c);
-        } System.out.println();
-
         System.out.println("score: " + score);
     }
 
-    //print the nwm matrix
+    //print the NW matrix
     public static void printNWM() {
+        if (!printNWM) {
+            return;
+        }
         for (int i = 0; i < nwm.length; i++) {
             for (int j = 0; j < nwm[0].length; j++) {
                 System.out.print(nwm[i][j].num + ":" + nwm[i][j].cellPointer + "\t\t");
@@ -136,22 +214,18 @@ public class NeedlemanWunschMain {
     }
 }
 
-/**
- * A cell in the Needleman-Wunsch score and traceback matrix
- */
+// A cell in the Needleman-Wunsch score and traceback matrix
 class NWCell {
     Integer num;
     Direction cellPointer;
 
-    NWCell(Integer num, Direction whereto) {
+    NWCell(Integer num, Direction cellPointer) {
         this.num = num;
-        this.cellPointer = whereto;
+        this.cellPointer = cellPointer;
     }
 }
 
-/**
- * some useful constants for the NWCell class
- */
+// direction constants for the NWCell class
 enum Direction {
     UP, LEFT, DIAG, DONE;
 }

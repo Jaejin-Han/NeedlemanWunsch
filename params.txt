@@ -1,0 +1,6 @@
+transversionScore: -2
+transitionScore: -1
+matchScore: 2
+gapScore: -1
+printNWM: true
+printAlignment: true
