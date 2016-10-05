@@ -19,10 +19,12 @@ public class NeedlemanWunschMain {
     public static boolean printNWM;
     public static boolean printAlignment;
 
-    // instantiated at runtime
+    // data structures in use during execution
     public static NWCell[][] nwm; // The Needleman-Wunsch score and traceback matrix
     public static HashMap<Character, Integer> charIndexMap; // the mapping from CTAG to indices in the scoreMatrix
     public static int[][] scoreMatrix; // a matrix to hold the scoring system
+
+    // filename varirables
     public static String paramsFileName;
     public static String sequenceFileName;
 
@@ -53,6 +55,7 @@ public class NeedlemanWunschMain {
         nwm = new NWCell[sequenceOne.length() + 1][sequenceTwo.length() + 1];
     }
 
+    // read alg. parameters and input data from filenames passed as argument
     private static void handleInputFiles() {
         try {
             BufferedReader brp = new BufferedReader(new FileReader(paramsFileName));
@@ -81,7 +84,7 @@ public class NeedlemanWunschMain {
                 }
             }
 
-            // go through
+            // go through fasta formatted file
             boolean first = true;
             while ((currLine = brs.readLine()) != null) {
                 if (currLine.length() > 0 && "CTAG".contains(currLine.substring(0,1))) {
@@ -139,15 +142,12 @@ public class NeedlemanWunschMain {
     }
 
     private static Integer scoreMatrix(char a, char b) {
-        // should make sense if you look at the value of the String and matrix used here
         int i = charIndexMap.get(a);
         int j = charIndexMap.get(b);
         return scoreMatrix[i][j];
     }
 
-    /**
-     * Perform traceback
-     */
+    //  Perform traceback
     public static void traceback() {
         ArrayDeque<Character> stack1 = new ArrayDeque<>();
         ArrayDeque<Character> stack2 = new ArrayDeque<>();

@@ -1,3 +1,5 @@
+- update the numbers as desired -
+- leave one space between the numbers and the field name -
 transversionScore: -2
 transitionScore: -1
 matchScore: 2
